@@ -72,7 +72,8 @@ class ResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         
-        h = out.register_hook(self.activations_hook)
+        if out.requires_grad:
+            h = out.register_hook(self.activations_hook)
 
         out = F.avg_pool2d(out, 6)
         out = out.view(out.size(0), -1)

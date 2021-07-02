@@ -14,10 +14,18 @@ import cv2
 from torch.optim.lr_scheduler import OneCycleLR
 import torch.optim as optim
 
+import numpy as np
 
-PAD = 4
-MEAN = (0.49139968, 0.48215841, 0.44653091)
-STD = (0.24703223, 0.24348513, 0.26158784)STD
+train_losses = []
+test_losses = []
+train_acc = []
+test_acc = []
+
+
+
+classes = ["airplane", "automobile", "bird", "cat", "deer", 
+           "dog", "frog", "horse", "ship", "truck"]
+
 
 
 class Cifar10SearchDataset(torchvision.datasets.CIFAR10):
@@ -174,7 +182,7 @@ def get_device():
   return(device)
 
 
-def superimpose(heatmap, img):
+def superimpose(heatmap, img, denorm):
   img = np.transpose(denorm(img.cpu()), (1, 2, 0))
   heatmap = cv2.resize(heatmap.numpy(), (img.shape[1], img.shape[0]))
   heatmap = np.uint8(255*heatmap)
@@ -257,14 +265,14 @@ def train_model(model, criterion, device, train_loader, test_loader, optimizer, 
       print("EPOCH:", epoch)
       train(model, device, criterion, train_loader, optimizer, epoch)
       scheduler.step()
-      #test(model, device, criterion, test_loader)
+      test(model, device, criterion, test_loader)
 
   results = [train_losses, test_losses, train_acc, test_acc]
   return(results)
 
 
 
-def get_idxs(results, test_targets):
+def get_idxs(results, test_targets, device):
   """
   Args:
       results (tensor): predictions
@@ -279,7 +287,7 @@ def get_idxs(results, test_targets):
   return((miss_index, hit_index))
 
 
-def show_images_pred(images, targets, preds):
+def show_images_pred(images, targets, preds, denorm):
   """
   Args:
       images (tensor): images array
@@ -336,7 +344,7 @@ def gradcam_heatmap(model, results, test_images, device):
   return(heatmaps)
 
 
-def superimpose(heatmap, img):
+def superimpose(heatmap, img, denorm):
   """
   Args:
       heatmap (tensor): Gradient heatmap
@@ -353,7 +361,7 @@ def superimpose(heatmap, img):
   
   return(superimposed_img/superimposed_img.max())
 
-def show_images_cam(images, targets, preds, heatmaps, idx):
+def show_images_cam(images, targets, preds, heatmaps, idx, denorm):
   """
   Args:
       images (tensor): Images array
@@ -374,6 +382,29 @@ def show_images_cam(images, targets, preds, heatmaps, idx):
       label = classes[targets[i].cpu()]
       pred = classes[preds[i].cpu().argmax()]
       plt.title(f"(T)-{label} - (P)-{pred}")
-      plt.imshow(superimpose(heatmaps[i], images[i]))
+      plt.imshow(superimpose(heatmaps[i], images[i], denorm))
       
   plt.show()
+
+
+def make_plot(results):
+    """
+    Args:
+        images (list of list): Loss & Accuracy List
+    """
+    tr_losses = results[0]
+    te_losses = results[1]
+    tr_acc = results[2]
+    te_acc = results[3]
+
+
+    fig, axs = plt.subplots(2,2,figsize=(15,10))
+    axs[0, 0].plot(tr_losses)
+    axs[0, 0].set_title("Training Loss")
+    axs[1, 0].plot(tr_acc)
+    axs[1, 0].set_title("Training Accuracy")
+    axs[0, 1].plot(te_losses)
+    axs[0, 1].set_title("Test Loss")
+    axs[1, 1].plot(te_acc)
+    axs[1, 1].set_title("Test Accuracy")
+    plt.show()
