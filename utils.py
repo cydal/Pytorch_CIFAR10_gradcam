@@ -294,7 +294,7 @@ def show_images_pred(images, targets, preds, denorm):
       targets (tensor): Ground truth labels
       preds (tensor): Predictions
   """
-  plt.figure(figsize=(15 ,15))
+  plt.figure(figsize=(7,7))
   for i in range(16):
       plt.subplot(4, 4,i+1)
       label = classes[targets[i].cpu()]
@@ -354,7 +354,7 @@ def superimpose(heatmap, img, denorm):
       superimposed_img (numpy): image array
   """
   img = np.transpose(denorm(img.cpu()), (1, 2, 0))
-  heatmap = cv2.resize(heatmap.numpy(), (img.shape[1], img.shape[0]))
+  heatmap = cv2.resize(heatmap.cpu().numpy(), (img.shape[1], img.shape[0]))
   heatmap = np.uint8(255*heatmap)
   heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
   superimposed_img = (heatmap * 0.4) + 255*img.numpy()
@@ -376,7 +376,7 @@ def show_images_cam(images, targets, preds, heatmaps, idx, denorm):
   images, targets = images[idx], targets[idx]
   preds, heatmaps = preds[idx], heatmaps[idx]
 
-  plt.figure(figsize=(15 ,15))
+  plt.figure(figsize=(7,7))
   for i in range(16):
       plt.subplot(4, 4,i+1)
       label = classes[targets[i].cpu()]
@@ -392,13 +392,12 @@ def make_plot(results):
     Args:
         images (list of list): Loss & Accuracy List
     """
-    tr_losses = results[0]
+    tr_losses = [t.item() for t in results[0]]
     te_losses = results[1]
     tr_acc = results[2]
     te_acc = results[3]
 
-
-    fig, axs = plt.subplots(2,2,figsize=(15,10))
+    fig, axs = plt.subplots(2,2,figsize=(7,7))
     axs[0, 0].plot(tr_losses)
     axs[0, 0].set_title("Training Loss")
     axs[1, 0].plot(tr_acc)
