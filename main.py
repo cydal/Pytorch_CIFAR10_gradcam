@@ -76,6 +76,8 @@ print(f"----------Visualize model predictions----------")
 show_images_pred(test_images, test_targets, test_predictions, denorm)
 
 
+test_images = test_images.to(device)
+
 print(f"----------Visualize misclassified predictions----------")
 show_images_pred(test_images[miss_index], test_targets[miss_index], test_predictions[miss_index], denorm)
 
@@ -83,6 +85,7 @@ show_images_pred(test_images[miss_index], test_targets[miss_index], test_predict
 print(f"----------Generate heatmaps for test images----------")
 heatmaps = gradcam_heatmap(model, test_predictions, test_images, device)
 
+heatmaps = heatmaps.to(device)
 
 hit_maps = heatmaps[hit_index]
 miss_maps = heatmaps[miss_index]
